@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':'.
+
+   |-----handy-ruler------------------------------------------------------|
+psi: Psi+ (Qt Jabber client)
+psi:
+psi: Psi is a cross-platform powerful Jabber client (Qt, C++) designed for 
+psi: the Jabber power users.
+psi: Psi+ is a Psi IM Mod by psi-dev@conference.jabber.ru
+psi: 
+psi: 
+psi: 
+psi: 
+psi: Psi homepage: http://psi-im.org/
+psi: Psi+ homepage: http://psi-dev.googlecode.com

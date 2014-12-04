@@ -1,0 +1,118 @@
+#!/bin/sh
+
+# Slackware build script for psi+
+# Written by Eugene Wissner <belka.ew@gmail.com>
+# Edited bt Alexei Panov <elemc@atisserv.ru> for psi+ (psi-dev)
+# Edited by sftp for use git repos
+
+GIT="https://github.com/psi-plus/psi-plus-snapshots.git"
+RES="https://github.com/psi-plus/resources.git"
+
+PRGNAM=psi-plus
+DATE=`date +'%Y%m%d'`
+BUILD=${BUILD:-1}
+TAG=${TAG:-sftp}
+
+PKGTYPE=${PKGTYPE:-txz}
+
+# Automatically determine the architecture we're building on:
+if [ -z "$ARCH" ]; then
+  case "$( uname -m )" in
+    i?86) ARCH=i486 ;;
+    arm*) ARCH=arm ;;
+    # Unless $ARCH is already set, use uname -m for all other archs:
+       *) ARCH=$( uname -m ) ;;
+  esac
+fi
+
+echo "Building for arch $ARCH"
+
+CWD=$(pwd)
+TMP=${TMP:-/tmp/$PRGNAM}
+PKG=${PKG:-/tmp/package-$PRGNAM}
+OUTPUT=${OUTPUT:-/tmp}
+
+if [ "$ARCH" = "i486" ]; then
+    SLKCFLAGS="-O2 -march=i486 -mtune=i686"
+    LIBDIRSUFFIX=""
+elif [ "$ARCH" = "i686" ]; then
+    SLKCFLAGS="-O2 -march=i686 -mtune=i686"
+    LIBDIRSUFFIX=""
+elif [ "$ARCH" = "x86_64" ]; then
+    SLKCFLAGS="-O2 -fPIC"
+    LIBDIRSUFFIX="64"
+else
+  SLKCFLAGS="-O2"
+  LIBDIRSUFFIX=""
+fi
+
+echo "SLKCFLAGS: $SLKCFLAGS"
+echo "LIBDIRSUFFIX: $LIBDIRSUFFIX"
+set -e 
+
+rm -rf $PKG $TMP
+mkdir -p $TMP $PKG $OUTPUT 
+
+cd $TMP
+git clone $GIT
+cd psi-plus-snapshots
+
+GITREV=$(git rev-list --tags --max-count=1)
+
+echo "git rev: $GITREV"
+
+GITTAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+
+echo "git tag: $GITTAG"
+
+VERSION="${GITTAG}_${DATE}"
+
+echo "version: $VERSION"
+
+./configure \
+    --prefix=/usr \
+    --libdir=/usr/lib$LIBDIRSUFFIX \
+    --enable-webkit \
+    --enable-whiteboarding \
+    --enable-plugins \
+    --release \
+    --no-separate-debug-info
+
+make
+make install INSTALL_ROOT=$PKG
+
+find $PKG | xargs file | grep -e "executable" -e "shared object" | grep ELF \
+  | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null || true
+
+mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
+cp -a COPYING INSTALL README ChangeLog version $PKG/usr/doc/$PRGNAM-$VERSION
+cat $CWD/$PRGNAM.SlackBuild > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
+cp -rf skins $PKG/usr/share/psi/ || echo no skins available
+cp -rf themes $PKG/usr/share/psi/ || echo no themes available
+
+mkdir -p $PKG/install
+cat $CWD/slack-desc > $PKG/install/slack-desc
+
+cd src/plugins
+
+mkdir -p $PKG/usr/lib$LIBDIRSUFFIX/psi-plus/plugins/
+
+for plugin in generic/* unix/*; do
+    cd "$TMP/psi-plus-snapshots/src/plugins/$plugin"
+    echo "Build plugin: $TMP/psi-plus-snapshots/src/plugins/$plugin"
+    qmake PREFIX="/usr" QMAKE_STRIP= || echo "Broken plugin: $TMP/psi-plus-snapshots/src/plugins/$plugin"
+    make && install ./*.so $PKG/usr/lib$LIBDIRSUFFIX/psi-plus/plugins/ || echo "Broken plugin: $TMP/psi-plus-snapshots/src/plugins/$plugin"
+done
+
+cd $TMP
+git clone $RES
+cd resources
+
+cp -a iconsets $PKG/usr/share/psi-plus/ || echo "Not installed iconsets"
+cp -a skins    $PKG/usr/share/psi-plus/ || echo "Not installed skins" 
+cp -a sound    $PKG/usr/share/psi-plus/ || echo "Not installed sound"
+cp -a themes   $PKG/usr/share/psi-plus/ || echo "Not installed themes"
+
+cd $PKG
+
+/sbin/makepkg -l y -c n $OUTPUT/$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE
