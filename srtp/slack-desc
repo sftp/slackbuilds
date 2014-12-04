@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.
+# Line up the first '|' above the ':' following the base package name, and
+# the '|' on the right side marks the last column you can put a character in.
+# You must make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+    |-----handy-ruler--------------------------------------------------------|
+srtp: This package provides an implementation of the Secure Real-time
+srtp: Transport Protocol (SRTP), the Universal Security Transform (UST), and
+srtp: a supporting cryptographic kernel.  These mechanisms are documented in
+srtp: the Internet Drafts in the doc/ subdirectory.  The SRTP API is
+srtp: documented in include/srtp.h, and the library is in libsrtp.a (after
+srtp: compilation).  An overview and reference manual is available in
+srtp: doc/libsrtp.pdf.  The PDF documentation is more up to date than this
+srtp: file.
+srtp:
+srtp:
+srtp:
