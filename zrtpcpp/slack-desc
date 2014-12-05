@@ -1,0 +1,17 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.
+# Line up the first '|' above the ':' following the base package name, and
+# the '|' on the right side marks the last column you can put a character in.
+# You must make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+       |-----handy-ruler------------------------------------------------------|
+zrtpcpp: This package provides a library that adds ZRTP support to the GNU
+zrtpcpp: ccRTP stack. Phil Zimmermann developed ZRTP to allow ad-hoc, easy to
+zrtpcpp: use key negotiation to setup Secure RTP (SRTP) sessions. GNU ZRTP
+zrtpcpp: works together with GNU ccRTP (1.5.0 or later) and provides a ZRTP
+zrtpcpp: implementation that can be directly embedded into client and server
+zrtpcpp: applications.
+zrtpcpp:
+zrtpcpp:
+zrtpcpp:

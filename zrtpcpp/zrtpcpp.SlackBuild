@@ -1,0 +1,42 @@
+#!/bin/sh
+
+NAME=zrtpcpp
+VERSION=`date +'%Y%m%d'`
+BUILD=${BUILD:-1}
+TAG=${TAG:-sftp}
+
+CWD=`pwd`
+TMP=${TMP:-/tmp/}
+PKG=$TMP/package-$NAME
+
+if [ -z "$ARCH" ]; then
+    case "$( uname -m )" in
+	i?86) ARCH=i486 ;;
+	arm*) ARCH=arm ;;
+	*) ARCH=$( uname -m ) ;;
+    esac
+fi
+
+SOURCE=git://git.linphone.org/zrtpcpp.git
+
+# getting source codes
+cd $TMP
+
+rm -rf $NAME
+git clone $SOURCE $NAME || exit 1
+
+cd $NAME
+
+cmake -Denable-ccrtp=false .
+
+make || exit 1
+make install DESTDIR=$PKG || exit 1
+
+cd $PKG
+
+mkdir -p $PKG/install
+mkdir -p $PKG/usr/doc
+cat $CWD/slack-desc > $PKG/install/slack-desc
+cat $CWD/$NAME.SlackBuild > $PKG/usr/doc/$NAME-$VERSION/$NAME.SlackBuild
+
+/sbin/makepkg -l y -c n $TMP/$NAME-$VERSION-$ARCH-$BUILD$TAG.txz
