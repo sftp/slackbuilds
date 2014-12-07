@@ -1,0 +1,55 @@
+#!/bin/sh
+
+NAME=bash-completion
+
+ARCH=noarch
+VERSION=`date +%Y%m%d`
+BUILD=${BUILD:-1sftp}
+
+CWD=`pwd`
+TMP=${TMP:-/tmp}
+PKG=$TMP/package-$NAME
+
+SOURCE=git://git.debian.org/git/$NAME/$NAME.git
+
+if [ ! -d $TMP ]; then
+    mkdir -p $TMP
+fi
+
+if [ ! -d $PKG ]; then
+    mkdir -p $PKG
+fi
+
+cd $TMP
+rm -rf -- $NAME
+
+git clone $SOURCE $NAME
+
+cd $NAME
+
+autoreconf -i
+./configure \
+  --prefix=/usr \
+  --sysconfdir=/etc \
+  --mandir=/usr/man \
+  --infodir=/usr/info \
+  --docdir=/usr/doc/$NAME-$VERSION
+
+make || exit 1
+make install DESTDIR=$PKG || exit 1
+
+mkdir -p $PKG/etc/profile.d
+cp bash_completion.sh $PKG/etc/profile.d/bash_completion.sh
+chmod 0755 $PKG/etc/profile.d/bash_completion.sh
+
+mkdir -p $PKG/usr/doc/$NAME-$VERSION
+cp -a AUTHORS COPYING README $PKG/usr/doc/$NAME-$VERSION
+
+cd $PKG
+
+mkdir -p $PKG/install
+cat $CWD/slack-desc > $PKG/install/slack-desc
+cat $CWD/slack-desc > $PKG/usr/doc/$NAME-$VERSION/slack-desc
+cat $CWD/$NAME.SlackBuild > $PKG/usr/doc/$NAME-$VERSION/$NAME.SlackBuild
+
+makepkg -l y -c y $TMP/$NAME-$VERSION-$ARCH-$BUILD.txz
