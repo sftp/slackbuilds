@@ -1,6 +1,6 @@
 #!/bin/sh
 
-NAME=srtp
+NAME=linphone-srtp
 VERSION=`date +'%Y%m%d'`
 BUILD=${BUILD:-1}
 TAG=${TAG:-sftp}
