@@ -5,15 +5,15 @@
 # You must make exactly 11 lines for the formatting to be correct.  It's also
 # customary to leave one space after the ':' except on otherwise blank lines.
 
-    |-----handy-ruler--------------------------------------------------------|
-srtp: This package provides an implementation of the Secure Real-time
-srtp: Transport Protocol (SRTP), the Universal Security Transform (UST), and
-srtp: a supporting cryptographic kernel.  These mechanisms are documented in
-srtp: the Internet Drafts in the doc/ subdirectory.  The SRTP API is
-srtp: documented in include/srtp.h, and the library is in libsrtp.a (after
-srtp: compilation).  An overview and reference manual is available in
-srtp: doc/libsrtp.pdf.  The PDF documentation is more up to date than this
-srtp: file.
-srtp:
-srtp:
-srtp:
+             |-----handy-ruler--------------------------------------------------------|
+linphone-srtp: This package provides an implementation of the Secure Real-time
+linphone-srtp: Transport Protocol (SRTP), the Universal Security Transform (UST), and
+linphone-srtp: a supporting cryptographic kernel.  These mechanisms are documented in
+linphone-srtp: the Internet Drafts in the doc/ subdirectory.  The SRTP API is
+linphone-srtp: documented in include/srtp.h, and the library is in srtp.a (after
+linphone-srtp: compilation).  An overview and reference manual is available in
+linphone-srtp: doc/srtp.pdf.  The PDF documentation is more up to date than this
+linphone-srtp: file.
+linphone-srtp:
+linphone-srtp:
+linphone-srtp:
