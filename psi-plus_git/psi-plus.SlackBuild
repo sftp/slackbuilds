@@ -31,6 +31,7 @@ CWD=$(pwd)
 TMP=${TMP:-/tmp/$PRGNAM}
 PKG=${PKG:-/tmp/package-$PRGNAM}
 OUTPUT=${OUTPUT:-/tmp}
+JOBS=${JOBS:-$((`grep ^processor -c /proc/cpuinfo` + 1))}
 
 if [ "$ARCH" = "i486" ]; then
     SLKCFLAGS="-O2 -march=i486 -mtune=i686"
@@ -78,7 +79,7 @@ echo "version: $VERSION"
     --release \
     --no-separate-debug-info
 
-make
+make -j $JOBS
 make install INSTALL_ROOT=$PKG
 
 find $PKG | xargs file | grep -e "executable" -e "shared object" | grep ELF \
