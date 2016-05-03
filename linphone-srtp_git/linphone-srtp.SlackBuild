@@ -9,6 +9,7 @@ CWD=`pwd`
 TMP=${TMP:-/tmp/}
 PKG=$TMP/package-$NAME
 OUTPUT=${OUTPUT:-/tmp}
+JOBS=${JOBS:-$((`grep ^processor -c /proc/cpuinfo` + 1))}
 
 if [ -z "$ARCH" ]; then
     case "$( uname -m )" in
@@ -32,7 +33,7 @@ autoconf
 
 ./configure
 
-make || exit 1
+make -j $JOBS || exit 1
 make install DESTDIR=$PKG || exit 1
 
 cd $PKG
