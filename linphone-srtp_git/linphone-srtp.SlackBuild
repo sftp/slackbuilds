@@ -43,4 +43,4 @@ mkdir -p $PKG/usr/doc/$NAME-$VERSION/
 cat $CWD/slack-desc > $PKG/install/slack-desc
 cat $CWD/$NAME.SlackBuild > $PKG/usr/doc/$NAME-$VERSION/$NAME.SlackBuild
 
-/sbin/makepkg -l y -c n $OUTPUT/$NAME-$VERSION-$ARCH-$BUILD$TAG.txz
+/sbin/makepkg -l y -c y $OUTPUT/$NAME-$VERSION-$ARCH-$BUILD$TAG.txz
