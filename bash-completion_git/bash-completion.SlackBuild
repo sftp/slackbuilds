@@ -9,6 +9,7 @@ BUILD=${BUILD:-1sftp}
 CWD=`pwd`
 TMP=${TMP:-/tmp}
 PKG=$TMP/package-$NAME
+JOBS=${JOBS:-$((`grep ^processor -c /proc/cpuinfo` + 1))}
 
 SOURCE=git://git.debian.org/git/$NAME/$NAME.git
 
@@ -35,7 +36,7 @@ autoreconf -i
   --infodir=/usr/info \
   --docdir=/usr/doc/$NAME-$VERSION
 
-make || exit 1
+make -j $JOBS || exit 1
 make install DESTDIR=$PKG || exit 1
 
 mkdir -p $PKG/etc/profile.d
