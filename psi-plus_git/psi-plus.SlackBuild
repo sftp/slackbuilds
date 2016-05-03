@@ -116,4 +116,4 @@ cp -a themes   $PKG/usr/share/psi-plus/ || echo "Not installed themes"
 
 cd $PKG
 
-/sbin/makepkg -l y -c n $OUTPUT/$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE
+/sbin/makepkg -l y -c y $OUTPUT/$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE
