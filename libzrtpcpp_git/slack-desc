@@ -6,12 +6,12 @@
 # customary to leave one space after the ':' except on otherwise blank lines.
 
        |-----handy-ruler------------------------------------------------------|
-zrtpcpp: This package provides a library that adds ZRTP support to the GNU
-zrtpcpp: ccRTP stack. Phil Zimmermann developed ZRTP to allow ad-hoc, easy to
-zrtpcpp: use key negotiation to setup Secure RTP (SRTP) sessions. GNU ZRTP
-zrtpcpp: works together with GNU ccRTP (1.5.0 or later) and provides a ZRTP
-zrtpcpp: implementation that can be directly embedded into client and server
-zrtpcpp: applications.
-zrtpcpp:
-zrtpcpp:
-zrtpcpp:
+libzrtpcpp: This package provides a library that adds ZRTP support to the GNU
+libzrtpcpp: ccRTP stack. Phil Zimmermann developed ZRTP to allow ad-hoc, easy to
+libzrtpcpp: use key negotiation to setup Secure RTP (SRTP) sessions. GNU ZRTP
+libzrtpcpp: works together with GNU ccRTP (1.5.0 or later) and provides a ZRTP
+libzrtpcpp: implementation that can be directly embedded into client and server
+libzrtpcpp: applications.
+libzrtpcpp:
+libzrtpcpp:
+libzrtpcpp:
