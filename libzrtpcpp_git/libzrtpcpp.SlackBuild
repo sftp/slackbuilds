@@ -42,8 +42,7 @@ git clone $SOURCE $NAME || exit 1
 
 cd $NAME
 
-cmake -Denable-ccrtp=false \
-      -DCMAKE_C_FLAGS:STRING="$SLKCFLAGS" \
+cmake -DCMAKE_C_FLAGS:STRING="$SLKCFLAGS" \
       -DCMAKE_CXX_FLAGS:STRING="$SLKCFLAGS" \
       -DCMAKE_INSTALL_PREFIX=/usr \
       .
