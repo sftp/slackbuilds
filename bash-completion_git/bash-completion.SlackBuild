@@ -4,7 +4,8 @@ NAME=bash-completion
 
 ARCH=noarch
 VERSION=`date +%Y%m%d`
-BUILD=${BUILD:-1sftp}
+BUILD=${BUILD:-1}
+TAG=${TAG:-sftp}
 
 CWD=`pwd`
 TMP=${TMP:-/tmp}
@@ -53,4 +54,4 @@ cat $CWD/slack-desc > $PKG/install/slack-desc
 cat $CWD/slack-desc > $PKG/usr/doc/$NAME-$VERSION/slack-desc
 cat $CWD/$NAME.SlackBuild > $PKG/usr/doc/$NAME-$VERSION/$NAME.SlackBuild
 
-/sbin/makepkg -l y -c y $TMP/$NAME-$VERSION-$ARCH-$BUILD.txz
+/sbin/makepkg -l y -c y $TMP/$NAME-$VERSION-$ARCH-$BUILD$TAG.txz
