@@ -40,6 +40,7 @@ CWD=$(pwd)
 TMP=${TMP:-/tmp/}
 PKG=$TMP/package-$PRGNAM
 OUTPUT=${OUTPUT:-/tmp}
+JOBS=${JOBS:-$((`grep ^processor -c /proc/cpuinfo` + 1))}
 
 if [ "$ARCH" = "i486" ]; then
    LIBDIRSUFFIX=""
@@ -81,7 +82,7 @@ BUILD_OPTS=${BUILD_OPTS:-""}
   --docdir=/usr/doc/$PRGNAM-$VERSION \
   $BUILD_OPTS
 
-./waf build
+JOBS=$JOBS ./waf build
 ./waf --destdir=$PKG install
 
 for f in $PKG/etc/mpv/*.conf ; do
