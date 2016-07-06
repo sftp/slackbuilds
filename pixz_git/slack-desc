@@ -1,0 +1,12 @@
+pixz: Pixz (pronounced pixie) is a parallel, indexing version of xz.
+pixz:
+pixz: pixz vs xz
+pixz:
+pixz: The existing XZ Utils provide great compression in the .xz 
+pixz: file format, but they produce just one big block of compressed
+pixz: data. Pixz instead produces a collection of smaller blocks which 
+pixz: makes random access to the original data possible. This is especially 
+pixz: useful for large tarballs.
+pixz:
+pixz: pixz homepage: https://github.com/vasi/pixz
+pixz:
