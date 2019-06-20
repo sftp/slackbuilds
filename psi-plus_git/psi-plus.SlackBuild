@@ -58,15 +58,7 @@ cd $TMP
 git clone $GIT
 cd psi-plus-snapshots
 
-GITREV=$(git rev-list --tags --max-count=1)
-
-echo "git rev: $GITREV"
-
-GITTAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-
-echo "git tag: $GITTAG"
-
-VERSION="${GITTAG}_${DATE}"
+VERSION=$(git describe --tags | tr '-' '_')
 
 echo "version: $VERSION"
 
