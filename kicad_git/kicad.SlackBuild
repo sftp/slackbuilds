@@ -102,6 +102,7 @@ cd build
     -DKICAD_PLUGINS=/usr/lib${LIBDIRSUFFIX}/$PRGNAM/plugins \
     -DKICAD_STABLE_VERSION=ON \
     -DKICAD_SKIP_BOOST=ON \
+    -DKICAD_USE_OCE=OFF \
     -DBoost_NO_BOOST_CMAKE=ON \
     -DCMAKE_BUILD_TYPE=Release ..
   make -j $JOBS VERBOSE=1
