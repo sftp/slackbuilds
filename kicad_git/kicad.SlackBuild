@@ -40,13 +40,13 @@
 #python               >= 2.6 (optional) http://python.org/
 #wxPython             (optional)        http://www.wxpython.org/
 
-GIT="https://github.com/KiCad/kicad-source-mirror"
+GIT="https://gitlab.com/kicad/code/kicad.git"
 
 PRGNAM=kicad
-DATE=`date +'%Y%m%d'`
+
 VERSION=${VERSION:-git$DATE}
 BUILD=${BUILD:-1}
-TAG=${TAG:-met}
+TAG=${TAG:-sftp}
 PKGTYPE=${PKGTYPE:-txz}
 
 if [ -z "$ARCH" ]; then
@@ -82,9 +82,11 @@ set -e
 rm -rf $PKG
 mkdir -p $PKG $OUTPUT
 cd $TMP
-rm -rf kicad-source-mirror
+rm -rf $PRGNAM
 git clone $GIT
-cd kicad-source-mirror
+cd $PRGNAM
+
+VERSION=$(git describe --tags | tr '-' '_')
 
 find -L . \
  \( -perm 777 -o -perm 775 -o -perm 750 -o -perm 711 -o -perm 555 \
