@@ -1,0 +1,15 @@
+# VictoriaMetrics options
+
+# Directory where VictoriaMetrics stores its data.
+# The default is /var/lib/victoria-metrics.  If you have a dedicated
+# data partition (e.g. /data), point this to a directory on it, for
+# example:
+#   DATADIR=/data/victoria-metrics
+# The directory must be owned by the "victoria-metrics" user:
+#   mkdir -p /data/victoria-metrics
+#   chown victoria-metrics:victoria-metrics /data/victoria-metrics
+DATADIR=/var/lib/victoria-metrics
+
+# Additional command line options for the single-node server.
+# See https://docs.victoriametrics.com/single-server/ for the full list.
+VICTORIA_METRICS_OPTS=""

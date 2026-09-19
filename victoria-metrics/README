@@ -1,0 +1,307 @@
+victoria-metrics (fast time series database)
+
+VictoriaMetrics is a fast, scalable and reliable time series database and
+monitoring solution. It is written in Go and is available as a single
+self-contained binary.
+
+This package bundles all VictoriaMetrics components in one Slackware
+package:
+
+  * victoria-metrics - the single-node server (port 8428 by default)
+  * vminsert, vmselect, vmstorage - the cluster components (only on
+    amd64 and arm64, where the upstream cluster tarball is published)
+  * vmagent - data collection agent
+  * vmalert, vmalert-tool - alerting and anomaly detection
+  * vmauth - authentication and authorization proxy
+  * vmbackup, vmrestore - backup and restore tools
+  * vmctl - command line management utility
+
+Groupname and Username
+
+You must have the "victoria-metrics" group and user to run this script,
+for example:
+
+  groupadd -g 369 victoria-metrics
+  useradd -u 369 -s /bin/false -d /var/lib/victoria-metrics victoria-metrics
+
+Starting the server
+
+The package installs /etc/rc.d/rc.victoria-metrics.new which is activated
+by doinst.sh.  To start VictoriaMetrics at boot, add the following to
+/etc/rc.d/rc.local:
+
+  if [ -x /etc/rc.d/rc.victoria-metrics ]; then
+    /etc/rc.d/rc.victoria-metrics start
+  fi
+
+The server stores its data in /var/lib/victoria-metrics and writes its
+log to /var/log/victoria-metrics/victoria-metrics.log.  Additional
+command line options can be set in /etc/default/victoria-metrics.
+
+vmagent persistent queue
+
+vmagent buffers received metrics in an on-disk queue before forwarding
+them to the storage.  The queue is stored in
+/var/lib/victoria-metrics/vmagent-queue (set via -remoteWrite.tmpDataPath
+in /etc/default/vmagent).  The rc script creates this directory and
+gives it to the "victoria-metrics" user automatically.
+
+If the queue directory is not writable by the service user, vmagent
+fails to start with "permission denied" on the queue path.  This can
+happen if vmagent is started from a directory the user cannot write to
+(e.g. /root), because without -remoteWrite.tmpDataPath vmagent creates
+the queue in the current working directory.
+
+Storing data on a dedicated partition
+
+If you have a dedicated data partition (e.g. mounted at /data), point
+VictoriaMetrics to a directory on it.  Edit /etc/default/victoria-metrics
+and set:
+
+  DATADIR=/data/victoria-metrics
+
+Then create the directory and give it to the service user:
+
+  mkdir -p /data/victoria-metrics
+  chown victoria-metrics:victoria-metrics /data/victoria-metrics
+  chmod 0750 /data/victoria-metrics
+
+The rc script creates the directory automatically if it does not exist
+and fixes ownership, so the chown/chmod above are only needed if you
+want to set them explicitly.  Restart the server afterwards:
+
+  /etc/rc.d/rc.victoria-metrics restart
+
+Documentation: https://docs.victoriametrics.com/
+
+
+Setup with nginx + vmauth + vmagent
+===================================
+
+The recommended production setup is:
+
+  client -> nginx (TLS) -> vmauth (token check) -> vmagent -> victoria-metrics
+
+All VictoriaMetrics components listen only on 127.0.0.1.  nginx terminates
+TLS and proxies to vmauth, which checks the Bearer token and proxies to
+vmagent, which forwards the metrics to the storage.
+
+Files installed by the package:
+
+  /etc/victoria-metrics/vmauth.conf.new   - vmauth config (token check)
+  /etc/default/vmagent.new                - vmagent options
+  /etc/default/vmauth.new                 - vmauth options
+  /etc/rc.d/rc.vmagent.new                - vmagent init script
+  /etc/rc.d/rc.vmauth.new                 - vmauth init script
+  /etc/nginx/conf.d/victoria-metrics.conf.new - nginx server block example
+
+All .new files are activated by doinst.sh on package install (or upgrade).
+
+1. Install the package and create the user/group (see above).
+
+2. Set a strong token in the vmauth config:
+
+     # edit /etc/victoria-metrics/vmauth.conf and replace
+     # CHANGE_ME_STRONG_TOKEN with a real secret
+
+3. Start the components (as root):
+
+     /etc/rc.d/rc.victoria-metrics start
+     /etc/rc.d/rc.vmagent start
+     /etc/rc.d/rc.vmauth start
+
+4. Configure nginx.  The example server block is installed at
+   /etc/nginx/conf.d/victoria-metrics.conf.new.  Edit it (server_name,
+   TLS certificate paths) and rename it to victoria-metrics.conf:
+
+     mv /etc/nginx/conf.d/victoria-metrics.conf.new \
+        /etc/nginx/conf.d/victoria-metrics.conf
+     nginx -t && /etc/rc.d/rc.nginx reload
+
+5. Test the whole chain.  Push a test metric with the token.
+
+   Prometheus text format via /api/v1/import/prometheus (plain text,
+   no compression - this is what most clients use):
+
+     curl -sS -X POST \
+       -H "Authorization: Bearer CHANGE_ME_STRONG_TOKEN" \
+       --data-binary "test_metric 42 $(($(date +%s) * 1000))" \
+       https://metrics.example.com/api/v1/import/prometheus
+
+   With labels:
+
+     curl -sS -X POST \
+       -H "Authorization: Bearer CHANGE_ME_STRONG_TOKEN" \
+       --data-binary "cpu_load{host=\"web1\",dc=\"eu\"} 0.75 $(($(date +%s) * 1000))" \
+       https://metrics.example.com/api/v1/import/prometheus
+
+   Or VictoriaMetrics JSON format via /api/v1/import:
+
+     curl -sS -X POST \
+       -H "Authorization: Bearer CHANGE_ME_STRONG_TOKEN" \
+       --data-binary "{\"metric\":{\"__name__\":\"test_metric\"},\"timestamps\":[$(($(date +%s) * 1000))],\"values\":[42]}" \
+       https://metrics.example.com/api/v1/import
+
+   Read the data back (read access must be configured in vmauth.conf):
+
+     curl -sS -H "Authorization: Bearer CHANGE_ME_STRONG_TOKEN" \
+       'https://metrics.example.com/api/v1/export?match=test_metric'
+
+   Notes:
+   - The timestamp must be in milliseconds and not older than the
+     retention period (default 1 year).
+   - The Prometheus remote write endpoint /api/v1/write expects
+     snappy-compressed bodies (Prometheus standard).  Use
+     /api/v1/import/prometheus for plain-text Prometheus format.
+   - For metrics with labels, use match={__name__=~"..."} or
+     match[]=... in the export query.
+
+
+Sending metrics without a timestamp
+===================================
+
+Clients without a reliable time source (e.g. embedded devices) can
+send metrics WITHOUT a timestamp - VictoriaMetrics will use the server
+time when the data is received.
+
+Prometheus text format without timestamp:
+
+  temp 25.5
+  power{device="sensor-1"} 3.3
+
+Example curl:
+
+  curl -sS -X POST \
+    -H "Authorization: Bearer CHANGE_ME_STRONG_TOKEN" \
+    --data-binary 'temp 25.5' \
+    https://metrics.example.com/api/v1/import/prometheus
+
+  curl -sS -X POST \
+    -H "Authorization: Bearer CHANGE_ME_STRONG_TOKEN" \
+    --data-binary 'power{device="sensor-1"} 3.3' \
+    https://metrics.example.com/api/v1/import/prometheus
+
+Multiple metrics in one request (no timestamps)
+-----------------------------------------------
+
+Several Prometheus text lines can be sent in a single request, one
+per line.  All samples get the same server receive time.
+
+  curl -sS -X POST \
+    -H "Authorization: Bearer CHANGE_ME_STRONG_TOKEN" \
+    --data-binary $'temp 25.5\nhumidity 60.1\npower{device="sensor-1"} 3.3' \
+    https://metrics.example.com/api/v1/import/prometheus
+
+The body is just the lines joined with newlines:
+
+  temp 25.5
+  humidity 60.1
+  power{device="sensor-1"} 3.3
+
+IMPORTANT:
+- The Prometheus text format via /api/v1/import/prometheus accepts
+  lines WITHOUT a timestamp.  The server time is used in this case.
+- The VictoriaMetrics JSON format via /api/v1/import REQUIRES the
+  "timestamps" array - it cannot be omitted.
+- The Prometheus remote write endpoint /api/v1/write (snappy) also
+  accepts samples without a timestamp - the server time is used.
+- The simplest client is a plain HTTP POST with the Prometheus text
+  body.  No snappy compression is needed.
+- Note: without a timestamp, all samples get the server receive time.
+  If several samples are sent in one request, they will all have the
+  same timestamp.
+
+
+Grafana setup
+=============
+
+Grafana has a native "VictoriaMetrics" data source type (in addition
+to the generic Prometheus type).  Both work with this setup.  The
+requests go through the same chain as everything else:
+
+  Grafana -> nginx (TLS) -> vmauth (token check) -> victoria-metrics
+
+1. Add a read-only user for Grafana in /etc/victoria-metrics/vmauth.conf.
+   Uncomment the read user section and set a separate token:
+
+     users:
+     - bearer_token: "CHANGE_ME_STRONG_TOKEN"   # write token (sensors)
+       url_prefix: "http://127.0.0.1:8080/"
+     - bearer_token: "CHANGE_ME_READ_TOKEN"     # read token (Grafana)
+       url_prefix: "http://127.0.0.1:8428/"
+
+   Restart vmauth after editing:
+
+     /etc/rc.d/rc.vmauth restart
+
+2. In Grafana, add a new data source.  Two options work:
+
+   Option A - native "VictoriaMetrics" type (recommended):
+
+   - Type: VictoriaMetrics
+   - Name: VictoriaMetrics
+   - URL: https://metrics.example.com
+     (the subdomain that nginx proxies to vmauth)
+   - Access: "Using credentials" -> "Header" -> "Authorization"
+   - Header value: Bearer CHANGE_ME_READ_TOKEN
+   - Click "Save & test".  Grafana should report success.
+
+   Option B - generic "Prometheus" type:
+
+   - Type: Prometheus
+   - Name: VictoriaMetrics
+   - URL: https://metrics.example.com
+   - Access: "Using credentials" -> "Header" -> "Authorization"
+   - Header value: Bearer CHANGE_ME_READ_TOKEN
+   - Click "Save & test".
+
+   Both types work because VictoriaMetrics serves the Prometheus API
+   paths (/prometheus/*) on the same port as the main API.
+
+3. Create a dashboard.  In the query editor, select the metric name
+   (e.g. temp) and the time range.
+
+Notes:
+- The read token only allows queries (it proxies directly to the
+  single-node server, not through vmagent).  Sensors use the write
+  token, which goes through vmagent.
+- If you want Grafana to also write (e.g. for annotations), give it
+  the write token instead, but then it can also modify data.
+- The vmauth config in v1.152.0 has no "read_only" field - access
+  control is done by routing: the read user points to the server
+  directly, the write user points to vmagent.
+- For testing without vmauth, Grafana can also connect directly to
+  the victoria-metrics port (127.0.0.1:8428) without authentication,
+  but this bypasses the token check and should only be used for
+  local testing.
+
+Ports used (all bound to 127.0.0.1 only):
+
+  * 8428  - victoria-metrics (single-node server)
+  * 8080  - vmagent (receives metrics from vmauth)
+  * 8081  - vmauth (receives requests from nginx)
+
+To start all components at boot, add to /etc/rc.d/rc.local:
+
+  for svc in victoria-metrics vmagent vmauth; do
+    if [ -x /etc/rc.d/rc.$svc ]; then
+      /etc/rc.d/rc.$svc start
+    fi
+  done
+
+
+Gotchas
+=======
+
+- vmagent: without -remoteWrite.tmpDataPath it creates its queue in the
+  current working directory, which a service user can't write to.  Point
+  it at a writable dir (see /etc/default/vmagent).
+- vmagent: -remoteWrite.url must include the path (/api/v1/write),
+  otherwise it posts to / and gets 400.
+- /api/v1/write expects snappy-compressed bodies (Prometheus standard).
+  For plain text use /api/v1/import/prometheus.
+- Timestamps are in milliseconds; samples older than the retention
+  period (default 1 year) are rejected.
+- vmauth v1.152.0 config uses a users: list (not write_user/read_user),
+  and has no read_only field - restrict access by routing: read user ->
+  server directly, write user -> vmagent.

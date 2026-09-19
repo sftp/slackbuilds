@@ -1,0 +1,78 @@
+#!/bin/sh
+
+# Start/stop/restart the VictoriaMetrics single-node server.
+#
+# This script is installed as /etc/rc.d/rc.victoria-metrics.new and is
+# activated by doinst.sh.  To start VictoriaMetrics at boot, add the
+# following to /etc/rc.d/rc.local:
+#
+#   if [ -x /etc/rc.d/rc.victoria-metrics ]; then
+#     /etc/rc.d/rc.victoria-metrics start
+#   fi
+
+PROG=/usr/bin/victoria-metrics
+USER=victoria-metrics
+LOGFILE=/var/log/victoria-metrics/victoria-metrics.log
+DATADIR=/var/lib/victoria-metrics
+PIDFILE=/var/run/victoria-metrics.pid
+
+# Read optional configuration.  The DATADIR variable can be overridden
+# in /etc/default/victoria-metrics to point to a dedicated data
+# partition.
+if [ -r /etc/default/victoria-metrics ]; then
+  . /etc/default/victoria-metrics
+fi
+
+# Make sure the data directory exists and is owned by the service user.
+if [ ! -d "$DATADIR" ]; then
+  mkdir -p "$DATADIR"
+  chown $USER:$USER "$DATADIR"
+  chmod 0750 "$DATADIR"
+fi
+
+victoria_metrics_start() {
+  echo -n "Starting VictoriaMetrics: "
+  if [ -r $PIDFILE ] && kill -0 $(cat $PIDFILE) 2>/dev/null; then
+    echo "already running."
+    return 0
+  fi
+  nohup sudo -u $USER $PROG \
+      -storageDataPath=$DATADIR \
+      -httpListenAddr=:8428 \
+      $VICTORIA_METRICS_OPTS \
+      > $LOGFILE 2>&1 &
+  echo $! > $PIDFILE
+  echo "done."
+}
+
+victoria_metrics_stop() {
+  echo -n "Stopping VictoriaMetrics: "
+  if [ -r $PIDFILE ] && kill -0 $(cat $PIDFILE) 2>/dev/null; then
+    kill $(cat $PIDFILE)
+    rm -f $PIDFILE
+    echo "done."
+  else
+    echo "not running."
+  fi
+}
+
+victoria_metrics_restart() {
+  victoria_metrics_stop
+  sleep 2
+  victoria_metrics_start
+}
+
+case "$1" in
+  start)
+    victoria_metrics_start
+    ;;
+  stop)
+    victoria_metrics_stop
+    ;;
+  restart)
+    victoria_metrics_restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac

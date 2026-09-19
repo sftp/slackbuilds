@@ -1,0 +1,24 @@
+PRGNAM="victoria-metrics"
+VERSION="1.152.0"
+HOMEPAGE="https://victoriametrics.com/"
+DOWNLOAD="https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/victoria-metrics-linux-386-v1.152.0.tar.gz \
+         https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/vmutils-linux-386-v1.152.0.tar.gz \
+         https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/victoria-metrics-linux-arm-v1.152.0.tar.gz \
+         https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/vmutils-linux-arm-v1.152.0.tar.gz"
+MD5SUM="22af741ccab12010fdc6168932769ae3 \
+        8f4e24956d3b71e09b27c670dc40f95c \
+        1fb3c1a192230231c08b507045692831 \
+        648ac64893dbe4e29426b8b70c4e67dc"
+DOWNLOAD_x86_64="https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/victoria-metrics-linux-amd64-v1.152.0.tar.gz \
+                https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/victoria-metrics-linux-amd64-v1.152.0-cluster.tar.gz \
+                https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/vmutils-linux-amd64-v1.152.0.tar.gz \
+                https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/victoria-metrics-linux-arm64-v1.152.0.tar.gz \
+                https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/victoria-metrics-linux-arm64-v1.152.0-cluster.tar.gz \
+                https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.152.0/vmutils-linux-arm64-v1.152.0.tar.gz"
+MD5SUM_x86_64="db9cb28711dbc73b53c27de0a70beb1e \
+               37b06d277dd496effdcfb9eb5d7f7c51 \
+               a87b53eb341a279ce52d37d518de9a6c \
+               90bdb10c08a15dae16199b6905959172 \
+               7ff4ee6f33d7e5e22fab19799ee2f136 \
+               3b1d4bceb83bf37fdf27c5f1108b9d7a"
+REQUIRES=""

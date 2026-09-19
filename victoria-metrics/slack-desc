@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.
+# Line up the first '|' above the ':' following the base package name, and
+# the '|' on the right side marks the last column you can put a character in.
+# You must make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+                |-----handy-ruler------------------------------------------------------|
+victoria-metrics: victoria-metrics (fast time series database)
+victoria-metrics:
+victoria-metrics: VictoriaMetrics is a fast, scalable and reliable time series
+victoria-metrics: database and monitoring solution. This package bundles all
+victoria-metrics: components: the single-node server, the cluster components
+victoria-metrics: (vminsert, vmselect, vmstorage) and the utilities (vmagent,
+victoria-metrics: vmalert, vmauth, vmbackup, vmrestore, vmctl).
+victoria-metrics:
+victoria-metrics: Homepage: https://victoriametrics.com/
+victoria-metrics:
+victoria-metrics:

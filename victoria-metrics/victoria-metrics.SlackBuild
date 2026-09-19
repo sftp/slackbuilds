@@ -1,0 +1,145 @@
+#!/bin/bash
+
+cd $(dirname $0) ; CWD=$(pwd)
+
+PRGNAM=victoria-metrics
+VERSION=${VERSION:-1.152.0}
+BUILD=${BUILD:-1}
+TAG=${TAG:-_SBo}
+PKGTYPE=${PKGTYPE:-tgz}
+
+if [ -z "$ARCH" ]; then
+  case "$( uname -m )" in
+    i?86) ARCH=i586 ;;
+    arm*) ARCH=arm ;;
+       *) ARCH=$( uname -m ) ;;
+  esac
+fi
+
+UIDGID=369
+if ! getent group $PRGNAM; then
+	echo "  You must have the \"$PRGNAM\" group to run this script."
+	echo "    # groupadd -g $UIDGID $PRGNAM"
+	exit 1
+elif ! getent passwd $PRGNAM; then
+	echo "  You must have the \"$PRGNAM\" user to run this script."
+	echo "    # useradd -u $UIDGID -s /bin/false -d /var/lib/$PRGNAM -g $PRGNAM $PRGNAM"
+	exit 1
+fi
+
+# If the variable PRINT_PACKAGE_NAME is set, then this script will report what
+# the name of the created package would be, and then exit. This information
+# could be useful to other scripts.
+if [ ! -z "${PRINT_PACKAGE_NAME}" ]; then
+  echo "$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE"
+  exit 0
+fi
+
+TMP=${TMP:-/tmp/SBo}
+PKG=$TMP/package-$PRGNAM
+OUTPUT=${OUTPUT:-/tmp}
+
+case "$ARCH" in
+  x86_64)  SRCARCH=amd64 ;;
+  aarch64) SRCARCH=arm64 ;;
+  i586|i686) SRCARCH=386 ;;
+  arm)     SRCARCH=arm ;;
+  *)       echo "$ARCH is not supported." ; exit 1 ;;
+esac
+
+# The cluster tarball (vminsert, vmselect, vmstorage) is only published
+# for amd64 and arm64.
+case "$SRCARCH" in
+  amd64|arm64) CLUSTER=yes ;;
+  *)           CLUSTER=no ;;
+esac
+
+set -e
+
+rm -rf $PKG
+mkdir -p $TMP $PKG $OUTPUT
+cd $TMP
+rm -rf $PRGNAM-$VERSION
+mkdir -p $PRGNAM-$VERSION
+
+# Single-node server
+tar xvf $CWD/victoria-metrics-linux-$SRCARCH-v$VERSION.tar.gz -C $PRGNAM-$VERSION
+
+# Cluster components (vminsert, vmselect, vmstorage)
+if [ "$CLUSTER" = "yes" ]; then
+  tar xvf $CWD/victoria-metrics-linux-$SRCARCH-v$VERSION-cluster.tar.gz -C $PRGNAM-$VERSION
+fi
+
+# Utilities (vmagent, vmalert, vmauth, vmbackup, vmrestore, vmctl, ...)
+tar xvf $CWD/vmutils-linux-$SRCARCH-v$VERSION.tar.gz -C $PRGNAM-$VERSION
+
+cd $PRGNAM-$VERSION
+chown -R root:root .
+find -L . \
+ \( -perm 777 -o -perm 775 -o -perm 750 -o -perm 711 -o -perm 555 \
+  -o -perm 511 \) -exec chmod 755 {} \; -o \
+ \( -perm 666 -o -perm 664 -o -perm 640 -o -perm 600 -o -perm 444 \
+  -o -perm 440 -o -perm 400 \) -exec chmod 644 {} \;
+
+# Install binaries with proper names
+mkdir -p $PKG/usr/bin
+install -m 0755 victoria-metrics-prod $PKG/usr/bin/victoria-metrics
+
+if [ "$CLUSTER" = "yes" ]; then
+  install -m 0755 vminsert-prod $PKG/usr/bin/vminsert
+  install -m 0755 vmselect-prod $PKG/usr/bin/vmselect
+  install -m 0755 vmstorage-prod $PKG/usr/bin/vmstorage
+fi
+
+install -m 0755 vmagent-prod $PKG/usr/bin/vmagent
+install -m 0755 vmalert-prod $PKG/usr/bin/vmalert
+install -m 0755 vmalert-tool-prod $PKG/usr/bin/vmalert-tool
+install -m 0755 vmauth-prod $PKG/usr/bin/vmauth
+install -m 0755 vmbackup-prod $PKG/usr/bin/vmbackup
+install -m 0755 vmrestore-prod $PKG/usr/bin/vmrestore
+install -m 0755 vmctl-prod $PKG/usr/bin/vmctl
+
+# Default options files
+mkdir -p $PKG/etc/default
+cat $CWD/victoria-metrics.default > $PKG/etc/default/victoria-metrics.new
+cat $CWD/vmagent.default > $PKG/etc/default/vmagent.new
+cat $CWD/vmauth.default > $PKG/etc/default/vmauth.new
+
+# vmauth configuration
+mkdir -p $PKG/etc/victoria-metrics
+cat $CWD/vmauth.conf.example > $PKG/etc/victoria-metrics/vmauth.conf.new
+
+# nginx example server block (nginx includes /etc/nginx/conf.d/*.conf)
+mkdir -p $PKG/etc/nginx/conf.d
+cat $CWD/nginx-victoria-metrics.conf.example > $PKG/etc/nginx/conf.d/victoria-metrics.conf.new
+
+# Data and log directories
+mkdir -p $PKG/var/lib/victoria-metrics
+chown victoria-metrics:victoria-metrics $PKG/var/lib/victoria-metrics
+chmod 0750 $PKG/var/lib/victoria-metrics
+
+mkdir -p $PKG/var/log/victoria-metrics
+chown victoria-metrics:victoria-metrics $PKG/var/log/victoria-metrics
+chmod 0755 $PKG/var/log/victoria-metrics
+
+# Init scripts
+mkdir -p $PKG/etc/rc.d
+cat $CWD/rc.victoria-metrics.new > $PKG/etc/rc.d/rc.victoria-metrics.new
+chmod 0755 $PKG/etc/rc.d/rc.victoria-metrics.new
+cat $CWD/rc.vmagent.new > $PKG/etc/rc.d/rc.vmagent.new
+chmod 0755 $PKG/etc/rc.d/rc.vmagent.new
+cat $CWD/rc.vmauth.new > $PKG/etc/rc.d/rc.vmauth.new
+chmod 0755 $PKG/etc/rc.d/rc.vmauth.new
+
+find $PKG -print0 | xargs -0 file | grep -e "executable" -e "shared object" | grep ELF \
+  | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null || true
+
+mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
+cat $CWD/$PRGNAM.SlackBuild > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
+
+mkdir -p $PKG/install
+cat $CWD/slack-desc > $PKG/install/slack-desc
+cat $CWD/doinst.sh > $PKG/install/doinst.sh
+
+cd $PKG
+/sbin/makepkg -l y -c n $OUTPUT/$PRGNAM-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE

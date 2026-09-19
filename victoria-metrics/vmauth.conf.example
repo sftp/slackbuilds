@@ -1,0 +1,32 @@
+# vmauth configuration file
+# https://docs.victoriametrics.com/victoriametrics/vmauth/
+#
+# vmauth authenticates incoming requests by token and proxies them
+# to the configured backends.
+#
+# IMPORTANT: replace "CHANGE_ME_STRONG_TOKEN" with a real secret token
+# before using this configuration. The token is what your monitoring
+# agents will present in the "Authorization: Bearer <token>" header.
+
+users:
+  # User with write access: used by monitoring agents to push metrics.
+  # The token is the "Authorization: Bearer" value.
+  # All requests are proxied to vmagent, which listens on localhost:8080.
+  # vmagent accepts the VictoriaMetrics /api/v1/import and Prometheus
+  # /api/v1/write endpoints and forwards them to the storage.
+- bearer_token: "CHANGE_ME_STRONG_TOKEN"
+  url_prefix: "http://127.0.0.1:8080/"
+
+  # Read-only user for Grafana or other query tools.
+  # Requests are proxied directly to the single-node server.
+  # Grafana uses the Prometheus API paths (/prometheus/*), which
+  # VictoriaMetrics serves on the same port as the main API.
+  # Uncomment the lines below and set a different token:
+  # - bearer_token: "CHANGE_ME_READ_TOKEN"
+  #   url_prefix: "http://127.0.0.1:8428/"
+
+# Requests without a valid Authorization header are rejected with HTTP 401.
+# Uncomment the section below to allow unauthenticated access to the
+# endpoints listed in url_prefix (not recommended for production):
+# unauthorized_user:
+#   url_prefix: "http://127.0.0.1:8428/"

@@ -1,0 +1,6 @@
+# vmauth options
+
+# Additional command line options for vmauth.
+# See https://docs.victoriametrics.com/victoriametrics/vmauth/ for the
+# full list of flags.
+VMAUTH_OPTS=""

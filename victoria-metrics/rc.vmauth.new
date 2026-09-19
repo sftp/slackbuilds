@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# Start/stop/restart vmauth (VictoriaMetrics authentication proxy).
+#
+# This script is installed as /etc/rc.d/rc.vmauth.new and is activated
+# by doinst.sh.  To start vmauth at boot, add the following to
+# /etc/rc.d/rc.local:
+#
+#   if [ -x /etc/rc.d/rc.vmauth ]; then
+#     /etc/rc.d/rc.vmauth start
+#   fi
+
+PROG=/usr/bin/vmauth
+USER=victoria-metrics
+LOGFILE=/var/log/victoria-metrics/vmauth.log
+CONF=/etc/victoria-metrics/vmauth.conf
+PIDFILE=/var/run/vmauth.pid
+
+# Read optional configuration
+if [ -r /etc/default/vmauth ]; then
+  . /etc/default/vmauth
+fi
+
+vmauth_start() {
+  echo -n "Starting vmauth: "
+  if [ -r $PIDFILE ] && kill -0 $(cat $PIDFILE) 2>/dev/null; then
+    echo "already running."
+    return 0
+  fi
+  if [ ! -r $CONF ]; then
+    echo "FAILED: $CONF not found."
+    return 1
+  fi
+  nohup sudo -u $USER $PROG \
+      -auth.config=$CONF \
+      -httpListenAddr=127.0.0.1:8081 \
+      $VMAUTH_OPTS \
+      > $LOGFILE 2>&1 &
+  echo $! > $PIDFILE
+  echo "done."
+}
+
+vmauth_stop() {
+  echo -n "Stopping vmauth: "
+  if [ -r $PIDFILE ] && kill -0 $(cat $PIDFILE) 2>/dev/null; then
+    kill $(cat $PIDFILE)
+    rm -f $PIDFILE
+    echo "done."
+  else
+    echo "not running."
+  fi
+}
+
+vmauth_restart() {
+  vmauth_stop
+  sleep 2
+  vmauth_start
+}
+
+case "$1" in
+  start)
+    vmauth_start
+    ;;
+  stop)
+    vmauth_stop
+    ;;
+  restart)
+    vmauth_restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac

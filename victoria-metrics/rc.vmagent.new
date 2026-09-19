@@ -1,0 +1,76 @@
+#!/bin/sh
+
+# Start/stop/restart vmagent (VictoriaMetrics data collection agent).
+#
+# This script is installed as /etc/rc.d/rc.vmagent.new and is activated
+# by doinst.sh.  To start vmagent at boot, add the following to
+# /etc/rc.d/rc.local:
+#
+#   if [ -x /etc/rc.d/rc.vmagent ]; then
+#     /etc/rc.d/rc.vmagent start
+#   fi
+
+PROG=/usr/bin/vmagent
+USER=victoria-metrics
+LOGFILE=/var/log/victoria-metrics/vmagent.log
+PIDFILE=/var/run/vmagent.pid
+QUEUEDIR=/var/lib/victoria-metrics/vmagent-queue
+
+# Read optional configuration
+if [ -r /etc/default/vmagent ]; then
+  . /etc/default/vmagent
+fi
+
+# Make sure the persistent queue directory exists and is owned by the
+# service user.  vmagent stores its on-disk queue here (see
+# -remoteWrite.tmpDataPath in /etc/default/vmagent).
+if [ ! -d "$QUEUEDIR" ]; then
+  mkdir -p "$QUEUEDIR"
+  chown $USER:$USER "$QUEUEDIR"
+  chmod 0750 "$QUEUEDIR"
+fi
+
+vmagent_start() {
+  echo -n "Starting vmagent: "
+  if [ -r $PIDFILE ] && kill -0 $(cat $PIDFILE) 2>/dev/null; then
+    echo "already running."
+    return 0
+  fi
+  nohup sudo -u $USER $PROG \
+      $VMAGENT_OPTS \
+      > $LOGFILE 2>&1 &
+  echo $! > $PIDFILE
+  echo "done."
+}
+
+vmagent_stop() {
+  echo -n "Stopping vmagent: "
+  if [ -r $PIDFILE ] && kill -0 $(cat $PIDFILE) 2>/dev/null; then
+    kill $(cat $PIDFILE)
+    rm -f $PIDFILE
+    echo "done."
+  else
+    echo "not running."
+  fi
+}
+
+vmagent_restart() {
+  vmagent_stop
+  sleep 2
+  vmagent_start
+}
+
+case "$1" in
+  start)
+    vmagent_start
+    ;;
+  stop)
+    vmagent_stop
+    ;;
+  restart)
+    vmagent_restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac

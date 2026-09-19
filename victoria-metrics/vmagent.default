@@ -1,0 +1,29 @@
+# vmagent configuration
+# https://docs.victoriametrics.com/victoriametrics/vmagent/
+#
+# vmagent receives metrics via the VictoriaMetrics /api/v1/import and
+# Prometheus /api/v1/write endpoints and forwards them to the storage
+# (the single-node victoria-metrics server in this setup).
+#
+# This file is sourced by /etc/rc.d/rc.vmagent.new
+
+# Where vmagent listens for incoming HTTP requests.
+# Only localhost - nginx/vmauth are the only clients.
+VMAGENT_OPTS="-httpListenAddr=127.0.0.1:8080"
+
+# Where vmagent forwards the received metrics.
+# The single-node victoria-metrics server listens on localhost:8428.
+# IMPORTANT: the URL must include the /api/v1/write path, otherwise
+# vmagent sends the data to "/" and the storage rejects it with 400.
+VMAGENT_OPTS="$VMAGENT_OPTS -remoteWrite.url=http://127.0.0.1:8428/api/v1/write"
+
+# Directory for the persistent queue.  vmagent buffers data here when
+# the storage is temporarily unavailable.  The directory must be
+# writable by the "victoria-metrics" user (the rc script creates it).
+VMAGENT_OPTS="$VMAGENT_OPTS -remoteWrite.tmpDataPath=/var/lib/victoria-metrics/vmagent-queue"
+
+# Optional: enable the /metrics endpoint (Prometheus-style self-monitoring).
+# VMAGENT_OPTS="$VMAGENT_OPTS -pushmetrics.url=http://127.0.0.1:8428/"
+
+# Optional: limit the maximum number of samples per second.
+# VMAGENT_OPTS="$VMAGENT_OPTS -remoteWrite.rateLimit=100000"
