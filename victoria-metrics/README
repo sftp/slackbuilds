@@ -212,6 +212,56 @@ IMPORTANT:
   same timestamp.
 
 
+InfluxDB line protocol
+======================
+
+VictoriaMetrics accepts InfluxDB line protocol natively, so any
+InfluxDB-compatible client can push data without a translation layer.
+This is an alternative to the Prometheus text endpoint described above.
+
+Endpoint URLs
+-------------
+
+Through nginx (the production path, with token check).  The request
+goes nginx -> vmauth (Bearer token check) -> vmagent -> storage:
+
+  https://metrics.example.com/write
+
+The /write path is forwarded unchanged, so the request must carry a
+valid "Authorization: Bearer <token>" header.  Without it vmauth
+answers with HTTP 401.
+
+Directly on localhost, bypassing nginx and vmauth (no token):
+
+  http://127.0.0.1:8080/write          # vmagent
+  http://127.0.0.1:8428/write          # single-node server
+  http://127.0.0.1:8428/influx/write   # single-node server (explicit)
+  http://127.0.0.1:8428/api/v2/write   # single-node server, InfluxDB v2 API
+  http://127.0.0.1:8428/influx/api/v2/write
+
+The InfluxDB v2 endpoints (/api/v2/write and /influx/api/v2/write) are
+served only by the single-node server on port 8428.  vmagent exposes
+the v1-style /write path; it forwards everything to the storage.
+
+The body is plain InfluxDB line protocol - one or more lines separated
+by newlines, no compression or special encoding needed:
+
+  weather,location=us-midwest temperature=82 1465839830100400200
+  cpu,host=web1 usage=0.75
+
+Notes:
+- Timestamps are in nanoseconds by default.  If omitted, the server
+  receive time is used.
+- The "db" query argument (e.g. /write?db=mydb) becomes a "db" label
+  unless the line already has a "db" tag (changeable via
+  -influxDBLabel).
+- Field names map to metric names prefixed with "<measurement>_"
+  (separator configurable via -influxMeasurementFieldSeparator); tags
+  map to labels.
+- No database has to be pre-created, so clients that try to create one
+  should skip that step.
+
+
 Grafana setup
 =============
 
@@ -302,6 +352,13 @@ Gotchas
   For plain text use /api/v1/import/prometheus.
 - Timestamps are in milliseconds; samples older than the retention
   period (default 1 year) are rejected.
+- InfluxDB line protocol expects timestamps in nanoseconds (not
+  milliseconds like the Prometheus endpoints).  If omitted, the server
+  receive time is used.
+- InfluxDB v2 API paths (/api/v2/write, /influx/api/v2/write) are
+  served only by the single-node server on port 8428, not by vmagent.
+- InfluxDB ingestion through nginx requires the Bearer token, because
+  vmauth checks it before the request reaches vmagent.
 - vmauth v1.152.0 config uses a users: list (not write_user/read_user),
   and has no read_only field - restrict access by routing: read user ->
   server directly, write user -> vmagent.
