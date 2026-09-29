@@ -26,6 +26,7 @@ config etc/default/vmagent.new
 config etc/default/vmauth.new
 config etc/victoria-metrics/vmauth.conf.new
 config etc/nginx/conf.d/victoria-metrics.conf.new
+config etc/logrotate.d/victoria-metrics.new
 
 preserve_perms etc/rc.d/rc.victoria-metrics.new
 preserve_perms etc/rc.d/rc.vmagent.new

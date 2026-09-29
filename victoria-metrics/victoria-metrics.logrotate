@@ -1,0 +1,25 @@
+# Log rotation for the VictoriaMetrics components.
+#
+# The rc scripts (rc.victoria-metrics, rc.vmagent, rc.vmauth) start the
+# services with their stdout/stderr redirected to the files below, so the
+# running processes keep the file descriptors open and never reopen them.
+# copytruncate is therefore used: logrotate copies the current log and
+# then truncates the original in place, so the running process keeps
+# writing to the same file without needing a restart or a signal.
+#
+# The services run as the "victoria-metrics" user, so logrotate drops
+# privileges to that user (su) to create and rotate the files.
+
+/var/log/victoria-metrics/victoria-metrics.log
+/var/log/victoria-metrics/vmagent.log
+/var/log/victoria-metrics/vmauth.log
+{
+  weekly
+  rotate 4
+  compress
+  delaycompress
+  missingok
+  notifempty
+  copytruncate
+  su victoria-metrics victoria-metrics
+}

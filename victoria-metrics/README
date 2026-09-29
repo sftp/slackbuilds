@@ -38,6 +38,28 @@ The server stores its data in /var/lib/victoria-metrics and writes its
 log to /var/log/victoria-metrics/victoria-metrics.log.  Additional
 command line options can be set in /etc/default/victoria-metrics.
 
+Log rotation
+
+The rc scripts start the services with their stdout/stderr redirected
+to files under /var/log/victoria-metrics:
+
+  * victoria-metrics.log - single-node server
+  * vmagent.log          - vmagent
+  * vmauth.log           - vmauth
+
+The package installs /etc/logrotate.d/victoria-metrics.new, which is
+activated by doinst.sh.  It rotates all three logs weekly, keeps four
+compressed generations and uses copytruncate, because the running
+processes keep the log file descriptors open and never reopen them.
+logrotate drops privileges to the "victoria-metrics" user (su) so it
+can create and rotate the files.
+
+The config is picked up automatically by the system logrotate cron job
+(/etc/cron.daily/logrotate).  To test it manually:
+
+  logrotate -d /etc/logrotate.d/victoria-metrics   # dry run
+  logrotate -f /etc/logrotate.d/victoria-metrics   # force rotation
+
 vmagent persistent queue
 
 vmagent buffers received metrics in an on-disk queue before forwarding

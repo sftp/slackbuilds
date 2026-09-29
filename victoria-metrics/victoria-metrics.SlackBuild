@@ -122,6 +122,11 @@ mkdir -p $PKG/var/log/victoria-metrics
 chown victoria-metrics:victoria-metrics $PKG/var/log/victoria-metrics
 chmod 0755 $PKG/var/log/victoria-metrics
 
+# Log rotation.  The rc scripts redirect the services' stdout/stderr to
+# the log files, so the config uses copytruncate (see the file itself).
+mkdir -p $PKG/etc/logrotate.d
+cat $CWD/victoria-metrics.logrotate > $PKG/etc/logrotate.d/victoria-metrics.new
+
 # Init scripts
 mkdir -p $PKG/etc/rc.d
 cat $CWD/rc.victoria-metrics.new > $PKG/etc/rc.d/rc.victoria-metrics.new
